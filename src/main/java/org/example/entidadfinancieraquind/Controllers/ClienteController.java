@@ -45,6 +45,7 @@ public class ClienteController {
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarCliente(@PathVariable Long id, @RequestBody Cliente clienteActualizar) {
         try {
+
             Cliente clienteActualizado = clienteService.actualizarCliente(id, clienteActualizar);
             if (clienteActualizado != null) {
                 return ResponseEntity.ok(clienteActualizado);
@@ -57,14 +58,21 @@ public class ClienteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminarCliente(@PathVariable Long id) {
-        clienteService.eliminarCliente(id);
-        return ResponseEntity.ok("cliente eliminado");
+    public ResponseEntity<?> eliminarCliente(@PathVariable Long id) {
+        try {
+            clienteService.eliminarCliente(id);
+            return ResponseEntity.ok("Cliente eliminado");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @ExceptionHandler(EdadInsuficienteException.class)
     public ResponseEntity<String> manejarEdadInsuficienteException(EdadInsuficienteException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+
 }
+
 

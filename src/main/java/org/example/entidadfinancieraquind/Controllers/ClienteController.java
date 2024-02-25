@@ -1,6 +1,7 @@
 package org.example.entidadfinancieraquind.Controllers;
 
 
+import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
 import org.example.entidadfinancieraquind.Entitys.Cliente;
 import org.example.entidadfinancieraquind.Exceptions.EdadInsuficienteException;
 import org.example.entidadfinancieraquind.Services.ClienteService;
@@ -61,7 +62,7 @@ public class ClienteController {
     public ResponseEntity<?> eliminarCliente(@PathVariable Long id) {
         try {
             clienteService.eliminarCliente(id);
-            return ResponseEntity.ok("Cliente eliminado");
+            return ResponseEntity.ok(FinancieraConstantes.CLIENTE_ELIMINADO);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

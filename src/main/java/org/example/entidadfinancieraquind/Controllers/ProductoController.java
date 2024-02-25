@@ -2,6 +2,7 @@ package org.example.entidadfinancieraquind.Controllers;
 
 
 
+import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
 import org.example.entidadfinancieraquind.Entitys.Producto;
 import org.example.entidadfinancieraquind.Exceptions.ClienteNotFoundException;
 import org.example.entidadfinancieraquind.Exceptions.TipoProductoInvalidoException;
@@ -41,10 +42,7 @@ public class ProductoController {
             Producto nuevoProducto = productoService.crearProducto(producto);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
         } catch (ClienteNotFoundException e) {
-            // Log de la excepción en la consola
-            System.err.println("Error al crear el producto: " + e.getMessage());
-            // Devolución de un mensaje claro al usuario en el JSON de respuesta
-            return ResponseEntity.badRequest().body("Error al crear el producto: El cliente asociado no existe.");
+            return ResponseEntity.badRequest().body(FinancieraConstantes.ERROR_AL_CREAR_EL_PRODUCTO);
         } catch (TipoProductoInvalidoException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (IllegalArgumentException e) {
@@ -60,17 +58,17 @@ public class ProductoController {
             // Verificar si el producto fue actualizado correctamente
             if (productoActualizado != null) {
                 // Verificar si el saldo es igual a $0 y el tipo de cuenta es "Cuenta de Ahorros"
-                if (productoActualizado.getSaldo() == 0 && productoActualizado.getTipoCuenta().equalsIgnoreCase("Cuenta de Ahorros")) {
+                if (productoActualizado.getSaldo() == 0 && productoActualizado.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS)) {
                     productoService.cancelarCuenta(productoActualizado.getId());
-                    productoActualizado.setEstado("cancelada");
-                } else if (productoActualizado.getTipoCuenta().equalsIgnoreCase("Cuenta Corriente")) {
+                    productoActualizado.setEstado(FinancieraConstantes.CANCELADA);
+                } else if (productoActualizado.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE)) {
                     // Establecer el estado de la cuenta corriente según su saldo
                     if (productoActualizado.getSaldo() == 0) {
-                        productoActualizado.setEstado("cancelada");
+                        productoActualizado.setEstado(FinancieraConstantes.CANCELADA);
                     } else {
                         // Generar un valor aleatorio entre 0 y 1 para determinar el estado
                         int randomValue = new Random().nextInt(2);
-                        productoActualizado.setEstado(randomValue == 0 ? "activa" : "inactiva");
+                        productoActualizado.setEstado(randomValue == 0 ? FinancieraConstantes.ACTIVA : FinancieraConstantes.INACTIVA);
                     }
                 }
                 return ResponseEntity.ok(productoActualizado);
@@ -83,6 +81,7 @@ public class ProductoController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
 
 
     @DeleteMapping("/{id}")

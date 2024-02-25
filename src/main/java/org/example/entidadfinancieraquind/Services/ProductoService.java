@@ -1,6 +1,7 @@
 package org.example.entidadfinancieraquind.Services;
 
 
+import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
 import org.example.entidadfinancieraquind.Entitys.Cliente;
 import org.example.entidadfinancieraquind.Entitys.Producto;
 import org.example.entidadfinancieraquind.Exceptions.ClienteNotFoundException;
@@ -39,29 +40,29 @@ public class ProductoService {
 
         Optional<Cliente> cliente = clienteRepository.findById(producto.getCliente().getId());
         if (!cliente.isPresent()) {
-            throw new ClienteNotFoundException("El cliente asociado al producto no existe.");
+            throw new ClienteNotFoundException(FinancieraConstantes.ERROR_CLIENTE_ASOCIADO_PRODUCTO);
         }
 
-        if (!tipoProducto.equals("Cuenta Corriente") && !tipoProducto.equals("Cuenta de Ahorros")) {
-            throw new TipoProductoInvalidoException("El tipo de producto debe ser 'Cuenta Corriente' o 'Cuenta de Ahorros'.");
+        if (!tipoProducto.equals(FinancieraConstantes.CUENTA_CORRIENTE) && !tipoProducto.equals(FinancieraConstantes.CUENTA_AHORROS)) {
+            throw new TipoProductoInvalidoException(FinancieraConstantes.ERROR_AHORROS_CORRIENTE);
         }
         // Aplicar regla de negocio: La cuenta de ahorros no puede tener un saldo menor a $0 (cero)
-        if (producto.getTipoCuenta().equalsIgnoreCase("cuenta de ahorros") && producto.getSaldo() < 0) {
-            throw new IllegalArgumentException("El saldo de una cuenta de ahorros no puede ser menor de 0.");
+        if (producto.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS) && producto.getSaldo() < 0) {
+            throw new IllegalArgumentException(FinancieraConstantes.ERROR_SALDO_AHORRO_CERO);
         }
 
         // Aplicar regla de negocio: Al crear una cuenta de ahorro, esta debe establecerse como activa de forma predeterminada
-        if (producto.getTipoCuenta().equalsIgnoreCase("cuenta de ahorros")) {
-            producto.setEstado("activa");
+        if (producto.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS)) {
+            producto.setEstado(FinancieraConstantes.ACTIVA);
         }
         // Aplicar regla de negocio para cuentas corrientes: estado aleatorio si saldo > 0
-        if (tipoProducto.equalsIgnoreCase("cuenta corriente") && producto.getSaldo() > 0) {
+        if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE) && producto.getSaldo() > 0) {
             // Generar un valor aleatorio entre 0 y 1 para determinar el estado
             int randomValue = new Random().nextInt(2);
             if (randomValue == 0) {
-                producto.setEstado("activa");
+                producto.setEstado(FinancieraConstantes.ACTIVA);
             } else {
-                producto.setEstado("inactiva");
+                producto.setEstado(FinancieraConstantes.INACTIVA);
             }
         }
 
@@ -84,33 +85,33 @@ public class ProductoService {
                         producto.setNumeroCuenta(numeroCuenta);
                     }
 
-                    if (!tipoProducto.equals("Cuenta Corriente") && !tipoProducto.equals("Cuenta de Ahorros")) {
-                        throw new TipoProductoInvalidoException("El tipo de producto debe ser 'Cuenta Corriente' o 'Cuenta de Ahorros'.");
+                    if (!tipoProducto.equals(FinancieraConstantes.CUENTA_CORRIENTE) && !tipoProducto.equals(FinancieraConstantes.CUENTA_AHORROS)) {
+                        throw new TipoProductoInvalidoException(FinancieraConstantes.ERROR_AHORROS_CORRIENTE);
                     }
 
                     // Aplicar regla de negocio: La cuenta de ahorros no puede tener un saldo menor a $0 (cero)
-                    if (tipoProducto.equalsIgnoreCase("cuenta de ahorros") && productoActualizar.getSaldo() < 0) {
-                        throw new IllegalArgumentException("El saldo de una cuenta de ahorros no puede ser menor de 0.");
+                    if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS) && productoActualizar.getSaldo() < 0) {
+                        throw new IllegalArgumentException(FinancieraConstantes.ERROR_SALDO_AHORRO_CERO);
                     }
 
                     // Aplicar regla de negocio: Al crear una cuenta de ahorro, esta debe establecerse como activa de forma predeterminada
-                    if (tipoProducto.equalsIgnoreCase("cuenta de ahorros")) {
-                        productoActualizar.setEstado("activa");
+                    if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS)) {
+                        productoActualizar.setEstado(FinancieraConstantes.ACTIVA);
                     }
 
                     // Actualizar el estado de la cuenta de ahorros si su saldo llega a cero
-                    if (productoActualizar.getTipoCuenta().equalsIgnoreCase("cuenta de ahorros") && productoActualizar.getSaldo() == 0) {
-                        producto.setEstado("cancelado");
+                    if (productoActualizar.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS) && productoActualizar.getSaldo() == 0) {
+                        producto.setEstado(FinancieraConstantes.CANCELADA);
                     }
 
                     // Actualizar el estado de la cuenta corriente si su saldo llega a cero o es mayor que cero
-                    if (productoActualizar.getTipoCuenta().equalsIgnoreCase("cuenta corriente")) {
+                    if (productoActualizar.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE)) {
                         if (productoActualizar.getSaldo() == 0) {
-                            producto.setEstado("cancelado");
+                            producto.setEstado(FinancieraConstantes.CANCELADA);
                         } else {
                             // Generar un valor aleatorio entre 0 y 1 para determinar el estado
                             int randomValue = new Random().nextInt(2);
-                            producto.setEstado(randomValue == 0 ? "activa" : "inactiva");
+                            producto.setEstado(randomValue == 0 ? FinancieraConstantes.ACTIVA : FinancieraConstantes.INACTIVA);
                         }
                     }
                     producto.setTipoCuenta(tipoProducto);
@@ -134,10 +135,10 @@ public class ProductoService {
         String numeroCuenta = generarNumeroAleatorio();
 
         // Verificar el tipo de producto y ajustar el prefijo del número de cuenta
-        if (tipoProducto.equalsIgnoreCase("Cuenta Corriente")) {
-            numeroCuenta = "33" + numeroCuenta.substring(0, 8); // Agregar "33" al inicio para cuentas corrientes
-        } else if (tipoProducto.equalsIgnoreCase("Cuenta de Ahorros")) {
-            numeroCuenta = "53" + numeroCuenta.substring(0, 8); // Agregar "53" al inicio para cuentas de ahorros
+        if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE)) {
+            numeroCuenta = FinancieraConstantes.N_CUENTA_CORRIENTE + numeroCuenta.substring(0, 8); // Agregar "33" al inicio para cuentas corrientes
+        } else if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS)) {
+            numeroCuenta = FinancieraConstantes.N_CUENTA_AHORROS + numeroCuenta.substring(0, 8); // Agregar "53" al inicio para cuentas de ahorros
         }
 
         return numeroCuenta;
@@ -151,15 +152,15 @@ public class ProductoService {
     }
     public void cancelarCuenta(Long id) {
         Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new ProductoNotFoundException("No se encontró el producto con el ID especificado."));
+                .orElseThrow(() -> new ProductoNotFoundException(FinancieraConstantes.PRODUCTO_NO_ENCONTRADO_CON_ID));
 
         // Verificar que el saldo sea igual a $0
         if (producto.getSaldo() == 0) {
             // Cambiar el estado de la cuenta a "cancelada"
-            producto.setEstado("cancelada");
+            producto.setEstado(FinancieraConstantes.CANCELADA);
             productoRepository.save(producto);
         } else {
-            throw new SaldoNoCeroException("No se puede cancelar la cuenta porque el saldo no es igual a $0.");
+            throw new SaldoNoCeroException(FinancieraConstantes.ERROR_CANCELAR_CUENTA);
         }
     }
 

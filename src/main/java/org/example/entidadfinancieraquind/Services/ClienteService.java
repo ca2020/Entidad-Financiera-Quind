@@ -2,6 +2,7 @@ package org.example.entidadfinancieraquind.Services;
 
 
 import jakarta.transaction.Transactional;
+import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
 import org.example.entidadfinancieraquind.Entitys.Cliente;
 import org.example.entidadfinancieraquind.Exceptions.EdadInsuficienteException;
 import org.example.entidadfinancieraquind.Repositorys.ClienteRepository;
@@ -51,7 +52,7 @@ public class ClienteService {
 
         // Verificar si la edad es menor de 18 años
         if (edadEnAnios < 18) {
-            throw new EdadInsuficienteException("El cliente debe ser mayor de 18 años para crear una cuenta.");
+            throw new EdadInsuficienteException(FinancieraConstantes.CLIENTE_MAYOR_EDAD);
         }
 
         // Continúa con la lógica para guardar el cliente en la base de datos
@@ -71,7 +72,6 @@ public class ClienteService {
                     cliente.setApellidos(validarLongitudApellido(clienteActualizar.getApellidos()));
                     cliente.setFechaNacimiento(clienteActualizar.getFechaNacimiento());
                     cliente.setFechaModificacion(new Date());
-                    System.out.println("Cliente después de la actualización: " + cliente);
 
                     return clienteRepository.save(cliente);
                 })
@@ -81,11 +81,11 @@ public class ClienteService {
     @Transactional
     public void eliminarCliente(Long id) {
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró el cliente con el ID proporcionado."));
+                .orElseThrow(() -> new IllegalArgumentException(FinancieraConstantes.CLIENTE_NO_ENCONTRADO_CON_ID));
 
         // Verificar si hay productos vinculados al cliente
         if (productoRepository.existsByCliente(cliente)) {
-            throw new IllegalStateException("No se puede eliminar el cliente porque tiene productos vinculados.");
+            throw new IllegalStateException(FinancieraConstantes.CLIENTE_VINCULO_PRODUCTO);
         }
 
         clienteRepository.deleteById(id);
@@ -95,21 +95,21 @@ public class ClienteService {
         // Utilizar una expresión regular para verificar el formato del correo electrónico
         String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
         if (!correoElectronico.matches(regex)) {
-            throw new IllegalArgumentException("El correo electrónico no tiene un formato válido.");
+            throw new IllegalArgumentException(FinancieraConstantes.ERROR_FORMATO_EMAIL);
         }
         return correoElectronico;
     }
 
     private @NotBlank(message = "Los nombres son requeridos") @Size(min = 2, message = "El nombre debe tener al menos 2 caracteres") String validarLongitudNombre(String nombre) {
         if (nombre.length() < 2) {
-            throw new IllegalArgumentException("El nombre debe tener al menos 2 caracteres.");
+            throw new IllegalArgumentException(FinancieraConstantes.ERROR_CARACTERES_NOMBRE);
         }
         return nombre;
     }
 
     private @NotBlank(message = "Los apellidos son requeridos") @Size(min = 2, message = "El apellido debe tener al menos 2 caracteres") String validarLongitudApellido(String apellido) {
         if (apellido.length() < 2) {
-            throw new IllegalArgumentException("El apellido debe tener al menos 2 caracteres.");
+            throw new IllegalArgumentException(FinancieraConstantes.ERROR_CARACTERES_APELLIDO);
         }
         return apellido;
     }

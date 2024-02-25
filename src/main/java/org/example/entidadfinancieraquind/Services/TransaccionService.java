@@ -1,6 +1,7 @@
 package org.example.entidadfinancieraquind.Services;
 
 
+import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
 import org.example.entidadfinancieraquind.Entitys.MovimientoCredito;
 import org.example.entidadfinancieraquind.Entitys.MovimientoDebito;
 import org.example.entidadfinancieraquind.Entitys.Producto;
@@ -45,14 +46,14 @@ public class TransaccionService {
 
         // Realizar la transacción según el tipo
         switch (transaccion.getTipo()) {
-            case "Consignación":
+            case FinancieraConstantes.CONSIGNACION:
                 return realizarConsignacion(transaccion);
-            case "Retiro":
+            case FinancieraConstantes.RETIRO:
                 return realizarRetiro(transaccion);
-            case "Transferencia":
+            case FinancieraConstantes.TRANSFERENCIA:
                 return realizarTransferencia(transaccion);
             default:
-                throw new IllegalArgumentException("Tipo de transacción inválido.");
+                throw new IllegalArgumentException(FinancieraConstantes.ERROR_TIPO_TRANSACCION_INVALIDA);
         }
     }
 
@@ -61,7 +62,7 @@ public class TransaccionService {
         Optional<Producto> optionalCuentaDestino = productoService.obtenerProductoPorId(transaccion.getCuentaDestino().getId());
 
         // Desempaquetar el Optional para obtener la cuenta de destino
-        Producto cuentaDestino = optionalCuentaDestino.orElseThrow(() -> new IllegalArgumentException("La cuenta de destino no existe en el sistema."));
+        Producto cuentaDestino = optionalCuentaDestino.orElseThrow(() -> new IllegalArgumentException(FinancieraConstantes.ERROR_CUENTA_DESTINO_NO_EXISTE));
 
         // Realizar la consignación
         cuentaDestino.setSaldo(cuentaDestino.getSaldo() + transaccion.getMonto());
@@ -75,7 +76,7 @@ public class TransaccionService {
         Optional<Producto> optionalCuentaOrigen = productoService.obtenerProductoPorId(transaccion.getCuentaOrigen().getId());
 
         // Desempaquetar el Optional para obtener la cuenta de origen
-        Producto cuentaOrigen = optionalCuentaOrigen.orElseThrow(() -> new IllegalArgumentException("La cuenta de origen no existe en el sistema."));
+        Producto cuentaOrigen = optionalCuentaOrigen.orElseThrow(() -> new IllegalArgumentException(FinancieraConstantes.ERROR_CUENTA_ORIGEN_NO_EXISTE));
 
         // Realizar el retiro
         if (cuentaOrigen.getSaldo() >= transaccion.getMonto()) {
@@ -84,7 +85,7 @@ public class TransaccionService {
 
             return transaccionRepository.save(transaccion);
         } else {
-            throw new SaldoInsuficienteException("Saldo insuficiente para realizar el retiro.");
+            throw new SaldoInsuficienteException(FinancieraConstantes.ERROR_SALDO_INSUFICIENTE_RETIRO);
         }
     }
 
@@ -94,8 +95,8 @@ public class TransaccionService {
         Optional<Producto> optionalCuentaDestino = productoService.obtenerProductoPorId(transaccion.getCuentaDestino().getId());
 
         // Desempaquetar los Optionals para obtener las cuentas de origen y destino
-        Producto cuentaOrigen = optionalCuentaOrigen.orElseThrow(() -> new IllegalArgumentException("La cuenta de origen no existe en el sistema."));
-        Producto cuentaDestino = optionalCuentaDestino.orElseThrow(() -> new IllegalArgumentException("La cuenta de destino no existe en el sistema."));
+        Producto cuentaOrigen = optionalCuentaOrigen.orElseThrow(() -> new IllegalArgumentException(FinancieraConstantes.ERROR_CUENTA_ORIGEN_NO_EXISTE));
+        Producto cuentaDestino = optionalCuentaDestino.orElseThrow(() -> new IllegalArgumentException(FinancieraConstantes.ERROR_CUENTA_DESTINO_NO_EXISTE));
 
         // Realizar la transferencia
         if (cuentaOrigen.getSaldo() >= transaccion.getMonto()) {
@@ -121,22 +122,22 @@ public class TransaccionService {
 
 
             // Verificar si la cuenta de origen es una cuenta de ahorros y su saldo ha llegado a cero
-            if (cuentaOrigen.getTipoCuenta().equalsIgnoreCase("cuenta de ahorros") && cuentaOrigen.getSaldo() == 0) {
+            if (cuentaOrigen.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS) && cuentaOrigen.getSaldo() == 0) {
                 // Actualizar el estado de la cuenta a "cancelado"
-                cuentaOrigen.setEstado("cancelado");
+                cuentaOrigen.setEstado(FinancieraConstantes.CANCELADA);
                 productoService.actualizarProducto(cuentaOrigen.getId(), cuentaOrigen);
             }
 
             return transaccionRepository.save(transaccion);
         } else {
-            throw new SaldoInsuficienteException("Saldo insuficiente para realizar la transferencia.");
+            throw new SaldoInsuficienteException(FinancieraConstantes.ERROR_SALDO_INSUFICIENTE_TRANSFERENCIA);
         }
     }
 
 
     public Transaccion actualizarTransaccion(Long id, Transaccion transaccionActualizar) {
         Transaccion transaccionExistente = transaccionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró la transacción con el ID proporcionado."));
+                .orElseThrow(() -> new IllegalArgumentException(FinancieraConstantes.TRANSACCION_NO_ENCONTRADO_CON_ID));
 
         // Actualizar los campos de la transacción existente con los datos proporcionados en transaccionActualizar
         transaccionExistente.setTipo(transaccionActualizar.getTipo());

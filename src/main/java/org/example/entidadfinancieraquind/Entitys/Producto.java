@@ -51,5 +51,4 @@ public class Producto {
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
-    // Otros campos y métodos
 }

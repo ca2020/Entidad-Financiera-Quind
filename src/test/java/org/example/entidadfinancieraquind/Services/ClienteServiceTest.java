@@ -1,6 +1,6 @@
 package org.example.entidadfinancieraquind.Services;
 
-import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
+
 import org.example.entidadfinancieraquind.Entitys.Cliente;
 import org.example.entidadfinancieraquind.Exceptions.EdadInsuficienteException;
 import org.example.entidadfinancieraquind.Repositorys.ClienteRepository;
@@ -35,7 +35,7 @@ public class ClienteServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Restar 19 años a la fecha actual para asegurarse de que el cliente tenga al menos 18 años
+
         LocalDate fechaNacimiento = LocalDate.now().minusYears(19);
 
         cliente = new Cliente();
@@ -49,13 +49,11 @@ public class ClienteServiceTest {
 
     @Test
     void crearCliente_ClienteValido_DebeRetornarClienteCreado() {
-        // Arrange
+
         when(clienteRepository.save(cliente)).thenReturn(cliente);
 
-        // Act
         Cliente clienteCreado = clienteService.crearCliente(cliente);
 
-        // Assert
         assertNotNull(clienteCreado);
         assertEquals(cliente.getNombres(), clienteCreado.getNombres());
         assertEquals(cliente.getApellidos(), clienteCreado.getApellidos());
@@ -65,17 +63,15 @@ public class ClienteServiceTest {
 
     @Test
     void crearCliente_ClienteMenorDe18Anios_DebeLanzarExcepcion() {
-        // Arrange
-        cliente.setFechaNacimiento(new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 17)); // Menos de 18 años
+
+        cliente.setFechaNacimiento(new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 17));
         when(clienteRepository.save(cliente)).thenReturn(cliente);
 
-        // Act & Assert
         assertThrows(EdadInsuficienteException.class, () -> clienteService.crearCliente(cliente));
     }
 
     @Test
     void actualizarCliente_ClienteExistente_DebeRetornarClienteActualizado() {
-        // Arrange
         Cliente clienteActualizado = new Cliente();
         clienteActualizado.setId(1L);
         clienteActualizado.setNombres("Jane");
@@ -86,10 +82,8 @@ public class ClienteServiceTest {
         when(clienteRepository.findById(cliente.getId())).thenReturn(Optional.of(cliente));
         when(clienteRepository.save(cliente)).thenReturn(clienteActualizado);
 
-        // Act
         Cliente clienteModificado = clienteService.actualizarCliente(cliente.getId(), clienteActualizado);
 
-        // Assert
         assertNotNull(clienteModificado);
         assertEquals(clienteActualizado.getNombres(), clienteModificado.getNombres());
         assertEquals(clienteActualizado.getApellidos(), clienteModificado.getApellidos());
@@ -109,34 +103,32 @@ public class ClienteServiceTest {
 
         when(clienteRepository.findById(cliente.getId())).thenReturn(Optional.empty());
 
-        // Act
         Cliente clienteModificado = clienteService.actualizarCliente(cliente.getId(), clienteActualizado);
 
-        // Assert
         assertNull(clienteModificado);
     }
 
     @Test
     void eliminarCliente_ClienteExistente_DebeEliminarCliente() {
-        // Arrange
+
         when(clienteRepository.findById(cliente.getId())).thenReturn(Optional.of(cliente));
 
-        // Act
+
         assertDoesNotThrow(() -> clienteService.eliminarCliente(cliente.getId()));
 
-        // Assert
+
         verify(clienteRepository, times(1)).deleteById(cliente.getId());
     }
 
     @Test
     void eliminarCliente_ClienteNoExistente_DebeLanzarExcepcion() {
-        // Arrange
+
         when(clienteRepository.findById(cliente.getId())).thenReturn(Optional.empty());
 
-        // Act & Assert
+
         assertThrows(IllegalArgumentException.class, () -> clienteService.eliminarCliente(cliente.getId()));
     }
 
-    // Otras pruebas para obtenerTodosClientes(), obtenerClientePorId(), etc.
+
 
 }

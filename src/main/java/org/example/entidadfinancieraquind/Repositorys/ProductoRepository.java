@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
-    // Aquí puedes agregar métodos adicionales de ser necesario
-    boolean existsByCliente(Cliente cliente);
+       boolean existsByCliente(Cliente cliente);
 }
 

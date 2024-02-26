@@ -56,7 +56,6 @@ public class Cliente {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date fechaModificacion;
 
-    // Otros campos y métodos
 }
 
 

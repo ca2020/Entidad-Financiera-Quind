@@ -40,5 +40,4 @@ public class Transaccion {
     @JoinColumn(name = "producto_id")
     private Producto producto;
 
-    // Otros campos y métodos
 }

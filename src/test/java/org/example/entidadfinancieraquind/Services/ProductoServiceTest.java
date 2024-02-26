@@ -1,25 +1,19 @@
 package org.example.entidadfinancieraquind.Services;
 
 import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
-import org.example.entidadfinancieraquind.Entitys.Cliente;
-import org.example.entidadfinancieraquind.Entitys.Producto;
+import org.example.entidadfinancieraquind.Entitys.*;
 import org.example.entidadfinancieraquind.Exceptions.ClienteNotFoundException;
-import org.example.entidadfinancieraquind.Exceptions.ProductoNotFoundException;
 import org.example.entidadfinancieraquind.Exceptions.SaldoNoCeroException;
-import org.example.entidadfinancieraquind.Exceptions.TipoProductoInvalidoException;
-import org.example.entidadfinancieraquind.Repositorys.ClienteRepository;
-import org.example.entidadfinancieraquind.Repositorys.ProductoRepository;
+import org.example.entidadfinancieraquind.Repositorys.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -33,8 +27,10 @@ class ProductoServiceTest {
     @Mock
     private ClienteRepository clienteRepository;
 
+
     @InjectMocks
     private ProductoService productoService;
+
 
     private Producto producto;
     private Cliente cliente;
@@ -134,4 +130,7 @@ class ProductoServiceTest {
         producto.setSaldo(1000.0);
         assertThrows(SaldoNoCeroException.class, () -> productoService.cancelarCuenta(1L));
     }
+
+
+
 }

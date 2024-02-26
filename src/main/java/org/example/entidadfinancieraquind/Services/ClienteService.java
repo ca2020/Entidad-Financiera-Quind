@@ -41,21 +41,14 @@ public class ClienteService {
         validarCorreoElectronico(cliente.getCorreoElectronico());
         validarLongitudNombre(cliente.getNombres());
         validarLongitudApellido(cliente.getApellidos());
-        // Obtener la fecha actual
+
         LocalDate fechaActual = LocalDate.now();
-
-        // Convertir la fecha de nacimiento del cliente a LocalDate
         LocalDate fechaNacimiento = cliente.getFechaNacimiento().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-        // Calcular la diferencia en años entre la fecha actual y la fecha de nacimiento
         long edadEnAnios = ChronoUnit.YEARS.between(fechaNacimiento, fechaActual);
-
-        // Verificar si la edad es menor de 18 años
         if (edadEnAnios < 18) {
             throw new EdadInsuficienteException(FinancieraConstantes.CLIENTE_MAYOR_EDAD);
         }
 
-        // Continúa con la lógica para guardar el cliente en la base de datos
         cliente.setFechaCreacion(new Date());
         cliente.setFechaModificacion(new Date());
         return clienteRepository.save(cliente);
@@ -83,7 +76,6 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(FinancieraConstantes.CLIENTE_NO_ENCONTRADO_CON_ID));
 
-        // Verificar si hay productos vinculados al cliente
         if (productoRepository.existsByCliente(cliente)) {
             throw new IllegalStateException(FinancieraConstantes.CLIENTE_VINCULO_PRODUCTO);
         }

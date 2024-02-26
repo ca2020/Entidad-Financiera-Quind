@@ -19,5 +19,4 @@ public class MovimientoCredito {
 
     private Date fecha;
 
-    // Constructor, getters y setters
 }

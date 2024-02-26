@@ -1,90 +1,129 @@
 package org.example.entidadfinancieraquind.Controllers;
 
-import org.example.entidadfinanciera.Entitys.Transaccion;
-import org.example.entidadfinanciera.Services.TransaccionService;
+import org.example.entidadfinancieraquind.Entitys.Transaccion;
+import org.example.entidadfinancieraquind.Services.TransaccionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class TransaccionControllerTest {
 
-    @Mock
+    private TransaccionController transaccionController;
     private TransaccionService transaccionService;
 
-    @InjectMocks
-    private TransaccionController transaccionController;
-
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
+    void setUp() {
+        transaccionService = mock(TransaccionService.class);
+        transaccionController = new TransaccionController(transaccionService);
     }
 
     @Test
-    public void obtenerTodasTransacciones_DebeRetornarListaDeTransacciones() {
-        Transaccion transaccion1 = new Transaccion();
-        transaccion1.setId(1L);
-        transaccion1.setTipo("Transaccion 1");
-        Transaccion transaccion2 = new Transaccion();
-        transaccion2.setId(2L);
-        transaccion2.setTipo("Transaccion 2");
+    void obtenerTodasTransacciones_DebeRetornarListaVacia() {
+        // Arrange
+        when(transaccionService.obtenerTodasTransacciones()).thenReturn(new ArrayList<>());
 
-        List<Transaccion> transacciones = Arrays.asList(transaccion1, transaccion2);
+        // Act
+        ResponseEntity<List<Transaccion>> response = transaccionController.obtenerTodasTransacciones();
 
-        when(transaccionService.obtenerTodasTransacciones()).thenReturn(transacciones);
-
-        ResponseEntity<List<Transaccion>> responseEntity = transaccionController.obtenerTodasTransacciones();
-
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(transacciones, responseEntity.getBody());
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(0, response.getBody().size());
     }
 
     @Test
-    public void obtenerTransaccionPorId_DebeRetornarTransaccionExistente() {
+    void obtenerTransaccionPorId_Existente_DebeRetornarTransaccion() {
+        // Arrange
+        long id = 1;
+        Transaccion transaccion = new Transaccion();
+        transaccion.setId(id);
+        when(transaccionService.obtenerTransaccionPorId(id)).thenReturn(Optional.of(transaccion));
+
+        // Act
+        ResponseEntity<Transaccion> response = transaccionController.obtenerTransaccionPorId(id);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(transaccion, response.getBody());
+    }
+
+    @Test
+    void obtenerTransaccionPorId_NoExistente_DebeRetornarNotFound() {
+        // Arrange
+        long id = 1;
+        when(transaccionService.obtenerTransaccionPorId(id)).thenReturn(Optional.empty());
+
+        // Act
+        ResponseEntity<Transaccion> response = transaccionController.obtenerTransaccionPorId(id);
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void crearTransaccion_TransaccionValida_DebeRetornarTransaccionCreada() {
+        // Arrange
         Transaccion transaccion = new Transaccion();
         transaccion.setId(1L);
-        transaccion.setTipo("Transaccion 1");
-
-        when(transaccionService.obtenerTransaccionPorId(1L)).thenReturn(Optional.of(transaccion));
-
-        ResponseEntity<Transaccion> responseEntity = transaccionController.obtenerTransaccionPorId(1L);
-
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(transaccion, responseEntity.getBody());
-    }
-
-    @Test
-    public void obtenerTransaccionPorId_DebeRetornarNotFoundParaTransaccionNoExistente() {
-        when(transaccionService.obtenerTransaccionPorId(1L)).thenReturn(Optional.empty());
-
-        ResponseEntity<Transaccion> responseEntity = transaccionController.obtenerTransaccionPorId(1L);
-
-        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-        assertNull(responseEntity.getBody());
-    }
-
-    @Test
-    public void crearTransaccion_DebeCrearNuevaTransaccion() {
-        Transaccion transaccion = new Transaccion();
-        transaccion.setId(1L);
-        transaccion.setTipo("Transaccion 1");
-
         when(transaccionService.crearTransaccion(transaccion)).thenReturn(transaccion);
 
-        ResponseEntity<Transaccion> responseEntity = transaccionController.crearTransaccion(transaccion);
+        // Act
+        ResponseEntity<Transaccion> response = transaccionController.crearTransaccion(transaccion);
 
-        assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-        assertEquals(transaccion, responseEntity.getBody());
+        // Assert
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(transaccion, response.getBody());
+    }
+
+
+    @Test
+    void actualizarTransaccion_TransaccionExistente_DebeRetornarTransaccionActualizada() {
+        // Arrange
+        long id = 1;
+        Transaccion transaccionActualizada = new Transaccion();
+        transaccionActualizada.setId(id);
+        when(transaccionService.actualizarTransaccion(id, transaccionActualizada)).thenReturn(transaccionActualizada);
+
+        // Act
+        ResponseEntity<Transaccion> response = transaccionController.actualizarTransaccion(id, transaccionActualizada);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(transaccionActualizada, response.getBody());
+    }
+
+    @Test
+    void actualizarTransaccion_TransaccionNoExistente_DebeRetornarNotFound() {
+        // Arrange
+        long id = 1;
+        Transaccion transaccion = new Transaccion();
+        transaccion.setId(id);
+        when(transaccionService.actualizarTransaccion(id, transaccion)).thenReturn(null);
+
+        // Act
+        ResponseEntity<Transaccion> response = transaccionController.actualizarTransaccion(id, transaccion);
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void eliminarTransaccion_TransaccionExistente_DebeRetornarNoContent() {
+        // Arrange
+        long id = 1;
+
+        // Act
+        ResponseEntity<Void> response = transaccionController.eliminarTransaccion(id);
+
+        // Assert
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(transaccionService, times(1)).eliminarTransaccion(id);
     }
 }

@@ -17,6 +17,11 @@ public class TransaccionController {
     @Autowired
     private TransaccionService transaccionService;
 
+    public TransaccionController(TransaccionService transaccionService) {
+        this.transaccionService = transaccionService;
+    }
+
+
     @GetMapping
     public ResponseEntity<List<Transaccion>> obtenerTodasTransacciones() {
         List<Transaccion> transacciones = transaccionService.obtenerTodasTransacciones();

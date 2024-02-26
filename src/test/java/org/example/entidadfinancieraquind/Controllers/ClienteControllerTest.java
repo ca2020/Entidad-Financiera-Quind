@@ -1,7 +1,9 @@
 package org.example.entidadfinancieraquind.Controllers;
 
-import org.example.entidadfinanciera.Entitys.Cliente;
-import org.example.entidadfinanciera.Services.ClienteService;
+import org.example.entidadfinancieraquind.Constantes.FinancieraConstantes;
+import org.example.entidadfinancieraquind.Entitys.Cliente;
+import org.example.entidadfinancieraquind.Exceptions.EdadInsuficienteException;
+import org.example.entidadfinancieraquind.Services.ClienteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -14,8 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ClienteControllerTest {
@@ -82,7 +83,7 @@ public class ClienteControllerTest {
 
         when(clienteService.crearCliente(cliente)).thenReturn(cliente);
 
-        ResponseEntity<Cliente> responseEntity = clienteController.crearCliente(cliente);
+        ResponseEntity<?> responseEntity = clienteController.crearCliente(cliente);
 
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
         assertEquals(cliente, responseEntity.getBody());
@@ -97,7 +98,7 @@ public class ClienteControllerTest {
 
         when(clienteService.actualizarCliente(id, cliente)).thenReturn(cliente);
 
-        ResponseEntity<Cliente> responseEntity = clienteController.actualizarCliente(id, cliente);
+        ResponseEntity<?> responseEntity = clienteController.actualizarCliente(id, cliente);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(cliente, responseEntity.getBody());
@@ -112,7 +113,7 @@ public class ClienteControllerTest {
 
         when(clienteService.actualizarCliente(id, cliente)).thenReturn(null);
 
-        ResponseEntity<Cliente> responseEntity = clienteController.actualizarCliente(id, cliente);
+        ResponseEntity<?> responseEntity = clienteController.actualizarCliente(id, cliente);
 
         assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
         assertNull(responseEntity.getBody());
@@ -122,10 +123,33 @@ public class ClienteControllerTest {
     public void eliminarCliente_DebeEliminarClienteExistente() {
         Long id = 1L;
 
-        ResponseEntity<String> responseEntity = clienteController.eliminarCliente(id);
+        ResponseEntity<?> responseEntity = clienteController.eliminarCliente(id);
 
-        assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-        assertNull(responseEntity.getBody());
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(FinancieraConstantes.CLIENTE_ELIMINADO, responseEntity.getBody());
         verify(clienteService, times(1)).eliminarCliente(id);
+    }
+
+    @Test
+    public void eliminarCliente_DebeRetornarBadRequestParaErrorAlEliminarCliente() {
+        Long id = 1L;
+
+        doThrow(IllegalStateException.class).when(clienteService).eliminarCliente(id);
+
+        ResponseEntity<?> responseEntity = clienteController.eliminarCliente(id);
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertNull(responseEntity.getBody()); // Verificar que el cuerpo de la respuesta sea null
+    }
+
+
+    @Test
+    public void manejarEdadInsuficienteException_DebeRetornarBadRequestConMensajeDeError() {
+        EdadInsuficienteException exception = new EdadInsuficienteException("Mensaje de error");
+
+        ResponseEntity<String> responseEntity = clienteController.manejarEdadInsuficienteException(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Mensaje de error", responseEntity.getBody());
     }
 }

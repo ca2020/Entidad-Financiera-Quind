@@ -1,6 +1,10 @@
 package org.example.entidadfinancieraquind.Constantes;
 
 public class FinancieraConstantes {
+
+    private FinancieraConstantes() {
+        // TODO document why this constructor is empty
+    }
     // Tipos de cuenta
     public static final String CUENTA_CORRIENTE = "Cuenta Corriente";
     public static final String CUENTA_AHORROS = "Cuenta de Ahorros";

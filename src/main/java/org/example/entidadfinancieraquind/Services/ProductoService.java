@@ -25,6 +25,7 @@ public class ProductoService {
     private ProductoRepository productoRepository;
     @Autowired
     private ClienteRepository clienteRepository;
+    private static final Random RANDOM = new Random();
     public List<Producto> obtenerTodosProductos() {
         return productoRepository.findAll();
     }
@@ -58,7 +59,7 @@ public class ProductoService {
         // Aplicar regla de negocio para cuentas corrientes: estado aleatorio si saldo > 0
         if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE) && producto.getSaldo() > 0) {
             // Generar un valor aleatorio entre 0 y 1 para determinar el estado
-            int randomValue = new Random().nextInt(2);
+            int randomValue = RANDOM.nextInt(2);
             if (randomValue == 0) {
                 producto.setEstado(FinancieraConstantes.ACTIVA);
             } else {
@@ -74,57 +75,87 @@ public class ProductoService {
     }
 
     public Producto actualizarProducto(Long id, Producto productoActualizar) {
-        return productoRepository.findById(id)
-                .map(producto -> {
-                    String tipoProducto = productoActualizar.getTipoCuenta();
+        // Buscar el producto en el repositorio
+        Optional<Producto> productoOptional = productoRepository.findById(id);
 
-                    // Verificar si el tipo de producto ha cambiado
-                    if (!tipoProducto.equalsIgnoreCase(producto.getTipoCuenta())) {
-                        // Generar un nuevo número de cuenta solo si el tipo de producto ha cambiado
-                        String numeroCuenta = generarNumeroCuenta(tipoProducto);
-                        producto.setNumeroCuenta(numeroCuenta);
-                    }
+        // Verificar si el producto existe en el repositorio
+        if (productoOptional.isEmpty()) {
+            throw new ProductoNotFoundException(FinancieraConstantes.PRODUCTO_NO_ENCONTRADO_CON_ID + id);
+        }
 
-                    if (!tipoProducto.equals(FinancieraConstantes.CUENTA_CORRIENTE) && !tipoProducto.equals(FinancieraConstantes.CUENTA_AHORROS)) {
-                        throw new TipoProductoInvalidoException(FinancieraConstantes.ERROR_AHORROS_CORRIENTE);
-                    }
+        // Obtener el producto de la base de datos
+        Producto producto = productoOptional.get();
 
-                    // Aplicar regla de negocio: La cuenta de ahorros no puede tener un saldo menor a $0 (cero)
-                    if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS) && productoActualizar.getSaldo() < 0) {
-                        throw new IllegalArgumentException(FinancieraConstantes.ERROR_SALDO_AHORRO_CERO);
-                    }
+        // Actualizar el producto con la información proporcionada
+        actualizarInformacionProducto(producto, productoActualizar);
 
-                    // Aplicar regla de negocio: Al crear una cuenta de ahorro, esta debe establecerse como activa de forma predeterminada
-                    if (tipoProducto.equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS)) {
-                        productoActualizar.setEstado(FinancieraConstantes.ACTIVA);
-                    }
-
-                    // Actualizar el estado de la cuenta de ahorros si su saldo llega a cero
-                    if (productoActualizar.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS) && productoActualizar.getSaldo() == 0) {
-                        producto.setEstado(FinancieraConstantes.CANCELADA);
-                    }
-
-                    // Actualizar el estado de la cuenta corriente si su saldo llega a cero o es mayor que cero
-                    if (productoActualizar.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE)) {
-                        if (productoActualizar.getSaldo() == 0) {
-                            producto.setEstado(FinancieraConstantes.CANCELADA);
-                        } else {
-                            // Generar un valor aleatorio entre 0 y 1 para determinar el estado
-                            int randomValue = new Random().nextInt(2);
-                            producto.setEstado(randomValue == 0 ? FinancieraConstantes.ACTIVA : FinancieraConstantes.INACTIVA);
-                        }
-                    }
-                    producto.setTipoCuenta(tipoProducto);
-                    producto.setEstado(productoActualizar.getEstado());
-                    producto.setSaldo(productoActualizar.getSaldo());
-                    producto.setExentaGMF(productoActualizar.isExentaGMF());
-                    producto.setFechaModificacion(new Date());
-                    return productoRepository.save(producto);
-                })
-                .orElse(null);
+        // Guardar y devolver el producto actualizado
+        return productoRepository.save(producto);
     }
 
+    private void actualizarInformacionProducto(Producto producto, Producto productoActualizar) {
+        // Verificar y actualizar el tipo de cuenta si ha cambiado
+        actualizarTipoCuenta(producto, productoActualizar);
 
+        // Verificar y aplicar reglas de negocio según el tipo de cuenta
+        aplicarReglasNegocio(producto, productoActualizar);
+    }
+
+    private void actualizarTipoCuenta(Producto producto, Producto productoActualizar) {
+        String tipoProducto = productoActualizar.getTipoCuenta();
+
+        // Verificar si el tipo de cuenta ha cambiado
+        if (!tipoProducto.equalsIgnoreCase(producto.getTipoCuenta())) {
+            // Generar un nuevo número de cuenta si el tipo de cuenta ha cambiado
+            String numeroCuenta = generarNumeroCuenta(tipoProducto);
+            producto.setNumeroCuenta(numeroCuenta);
+        }
+
+        // Actualizar el tipo de cuenta del producto
+        producto.setTipoCuenta(tipoProducto);
+    }
+
+    private void aplicarReglasNegocio(Producto producto, Producto productoActualizar) {
+        String tipoCuenta = productoActualizar.getTipoCuenta();
+        double saldo = productoActualizar.getSaldo();
+
+        // Verificar y aplicar reglas de negocio según el tipo de cuenta
+        if (tipoCuenta.equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS)) {
+            // Aplicar reglas de negocio para cuentas de ahorros
+            aplicarReglasAhorros(producto, saldo);
+        } else if (tipoCuenta.equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE)) {
+            // Aplicar reglas de negocio para cuentas corrientes
+            aplicarReglasCorriente(producto, saldo);
+        } else {
+            throw new TipoProductoInvalidoException(FinancieraConstantes.ERROR_AHORROS_CORRIENTE);
+        }
+    }
+
+    private void aplicarReglasAhorros(Producto producto, double saldo) {
+        // Verificar si el saldo de la cuenta de ahorros es negativo
+        if (saldo < 0) {
+            throw new IllegalArgumentException(FinancieraConstantes.ERROR_SALDO_AHORRO_CERO);
+        }
+
+        // Establecer el estado de la cuenta de ahorros como activa
+        producto.setEstado(FinancieraConstantes.ACTIVA);
+
+        // Actualizar el estado de la cuenta de ahorros si el saldo llega a cero
+        if (saldo == 0) {
+            producto.setEstado(FinancieraConstantes.CANCELADA);
+        }
+    }
+
+    private void aplicarReglasCorriente(Producto producto, double saldo) {
+        // Verificar si el saldo de la cuenta corriente es cero o mayor que cero
+        if (saldo == 0) {
+            producto.setEstado(FinancieraConstantes.CANCELADA);
+        } else {
+            // Generar un valor aleatorio entre 0 y 1 para determinar el estado
+            int randomValue = RANDOM.nextInt(2);
+            producto.setEstado(randomValue == 0 ? FinancieraConstantes.ACTIVA : FinancieraConstantes.INACTIVA);
+        }
+    }
 
     public void eliminarProducto(Long id) {
         productoRepository.deleteById(id);
@@ -144,10 +175,9 @@ public class ProductoService {
         return numeroCuenta;
     }
 
+    // Método para generar un número aleatorio de 10 dígitos
     private String generarNumeroAleatorio() {
-        // Generar un número aleatorio de 10 dígitos
-        Random random = new Random();
-        int numeroAleatorio = random.nextInt(900000000) + 100000000; // Números entre 100000000 y 999999999
+        int numeroAleatorio = RANDOM.nextInt(900000000) + 100000000; // Números entre 100000000 y 999999999
         return String.valueOf(numeroAleatorio);
     }
     public void cancelarCuenta(Long id) {

@@ -89,7 +89,7 @@ public class TransaccionService {
         }
     }
 
-    private Transaccion realizarTransferencia(Transaccion transaccion) {
+    public Transaccion realizarTransferencia(Transaccion transaccion) {
         // Obtener la cuenta de origen y destino desde la base de datos utilizando sus IDs
         Optional<Producto> optionalCuentaOrigen = productoService.obtenerProductoPorId(transaccion.getCuentaOrigen().getId());
         Optional<Producto> optionalCuentaDestino = productoService.obtenerProductoPorId(transaccion.getCuentaDestino().getId());

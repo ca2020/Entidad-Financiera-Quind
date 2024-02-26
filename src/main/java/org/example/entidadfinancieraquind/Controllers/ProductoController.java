@@ -55,32 +55,48 @@ public class ProductoController {
         try {
             Producto productoActualizado = productoService.actualizarProducto(id, productoActualizar);
 
-            // Verificar si el producto fue actualizado correctamente
-            if (productoActualizado != null) {
-                // Verificar si el saldo es igual a $0 y el tipo de cuenta es "Cuenta de Ahorros"
-                if (productoActualizado.getSaldo() == 0 && productoActualizado.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS)) {
-                    productoService.cancelarCuenta(productoActualizado.getId());
-                    productoActualizado.setEstado(FinancieraConstantes.CANCELADA);
-                } else if (productoActualizado.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE)) {
-                    // Establecer el estado de la cuenta corriente según su saldo
-                    if (productoActualizado.getSaldo() == 0) {
-                        productoActualizado.setEstado(FinancieraConstantes.CANCELADA);
-                    } else {
-                        // Generar un valor aleatorio entre 0 y 1 para determinar el estado
-                        int randomValue = new Random().nextInt(2);
-                        productoActualizado.setEstado(randomValue == 0 ? FinancieraConstantes.ACTIVA : FinancieraConstantes.INACTIVA);
-                    }
-                }
-                return ResponseEntity.ok(productoActualizado);
-            } else {
+            if (productoActualizado == null) {
                 return ResponseEntity.notFound().build();
             }
+
+            if (esCuentaDeAhorros(productoActualizado)) {
+                cancelarCuentaSiNecesario(productoActualizado);
+            } else if (esCuentaCorriente(productoActualizado)) {
+                actualizarEstadoCuentaCorriente(productoActualizado);
+            }
+
+            return ResponseEntity.ok(productoActualizado);
         } catch (TipoProductoInvalidoException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    private boolean esCuentaDeAhorros(Producto producto) {
+        return producto.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_AHORROS);
+    }
+
+    private boolean esCuentaCorriente(Producto producto) {
+        return producto.getTipoCuenta().equalsIgnoreCase(FinancieraConstantes.CUENTA_CORRIENTE);
+    }
+
+    private void cancelarCuentaSiNecesario(Producto producto) {
+        if (producto.getSaldo() == 0) {
+            productoService.cancelarCuenta(producto.getId());
+            producto.setEstado(FinancieraConstantes.CANCELADA);
+        }
+    }
+
+    private void actualizarEstadoCuentaCorriente(Producto producto) {
+        if (producto.getSaldo() == 0) {
+            producto.setEstado(FinancieraConstantes.CANCELADA);
+        } else {
+            int randomValue = new Random().nextInt(2);
+            producto.setEstado(randomValue == 0 ? FinancieraConstantes.ACTIVA : FinancieraConstantes.INACTIVA);
+        }
+    }
+
 
 
 

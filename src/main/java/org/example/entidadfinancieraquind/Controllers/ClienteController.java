@@ -59,7 +59,7 @@ public class ClienteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarCliente(@PathVariable Long id) {
+    public ResponseEntity<String> eliminarCliente(@PathVariable Long id) {
         try {
             clienteService.eliminarCliente(id);
             return ResponseEntity.ok(FinancieraConstantes.CLIENTE_ELIMINADO);
